@@ -1,0 +1,21 @@
+ARG CORES=20
+ARG BASE_IMAGE="golang:latest"
+ARG COCKROACH_VERSION="v21.1.1"
+
+FROM $BASE_IMAGE
+
+LABEL maintainer="jeremyhahn <mail@jeremyhahn.com>"
+
+ARG CORES
+ARG COCKROACH_VERSION
+
+ENV CORES=${CORES} \
+    COCKROACH_VERSION=${COCKROACH_VERSION} \
+    DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get -y upgrade
+RUN apt-get install -y build-essential golang autoconf bison cmake ccache libtinfo-dev libncurses-dev git curl
+
+RUN curl https://binaries.cockroachdb.com/cockroach-$COCKROACH_VERSION.src.tgz | tar  xvz
+RUN cd cockroach-$COCKROACH_VERSION && make -j$CORES build
+RUN cd cockroach-$COCKROACH_VERSION && make install

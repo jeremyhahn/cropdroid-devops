@@ -1,0 +1,11 @@
+---
+
+- name: Import Let's Encrypt certificate into ACM
+  command: "aws acm import-certificate --certificate file://{{ acme_dest }} --private-key file://{{ acme_key }} --certificate-chain file://{{ acme_chain_dest }}"
+  register: acm_certificate
+
+- set_fact:
+    certificate_json: "{{ acm_certificate.stdout | from_json }}"
+
+- name: Add common name tag to Let's Encrypt ACM certificate
+  command: "aws acm add-tags-to-certificate --certificate-arn {{ certificate_json.CertificateArn }} --tags Key=Name,Value={{ acme_common_name }}"

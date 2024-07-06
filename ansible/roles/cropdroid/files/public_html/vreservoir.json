@@ -1,0 +1,32 @@
+{
+ "controller_id": 573833979204763649,
+ "metrics": {
+  "DO_PER": 25,
+  "DO_mgL": 4,
+  "EC": 6,
+  "ORP": 19,
+  "PH": 6,
+  "SAL": 0.42,
+  "SG": 1,
+  "TDS": 466,
+  "envHeatIndex": 8,
+  "envHumidity": 2,
+  "envTemp": 60.78,
+  "lowerFloat": 273,
+  "mem": 1500,
+  "resTemp": 64,
+  "upperFloat": 315
+ },
+ "channels": [
+  1,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "timestamp": "2020-08-21T15:51:18.239322683-04:00"
+}

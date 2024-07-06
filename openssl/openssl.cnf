@@ -1,0 +1,32 @@
+[ req ]
+prompt                 = no
+days                   = 365
+distinguished_name     = req_distinguished_name
+req_extensions         = v3_req
+
+[ req_distinguished_name ]
+countryName            = US
+stateOrProvinceName    = FL
+localityName           = Miami
+organizationName       = CropDroid
+organizationalUnitName = Web Services
+commonName             = localhost
+emailAddress           = root@localhost
+
+[ v3_req ]
+basicConstraints       = CA:false
+extendedKeyUsage       = serverAuth
+subjectAltName         = @sans
+
+basicConstraints       = CA:false
+extendedKeyUsage       = serverAuth
+subjectAltName         = @sans
+authorityKeyIdentifier = keyid,issuer
+keyUsage               = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName         = @alt_names
+
+[ sans ]
+DNS.0 = localhost
+DNS.1 = dev.cropdroid.com
+IP.1 = 192.168.1.20
+email.1 = root@test.com

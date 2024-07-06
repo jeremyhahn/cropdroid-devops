@@ -1,0 +1,23 @@
+---
+
+- name: Create LetsEncrypt ACME challenge
+  acme_certificate:
+    account_key_src: "{{ acme_account_key_src }}"
+    acme_directory: "{{ acme_directory }}"
+    acme_version: 2
+    csr: "{{ acme_csr }}"
+    dest: "{{ acme_dest }}"
+    terms_agreed: true
+  register: letsencrypt_challenge
+
+- name: Validate LetsEncrypt challenge, retrieve the cert and intermediate certificate
+  acme_certificate:
+    account_key_src: "{{ acme_account_key_src }}"
+    acme_directory: "{{ acme_directory }}"
+    acme_version: 2
+    terms_agreed: true
+    csr: "{{ acme_csr }}"
+    dest: "{{ acme_dest }}"
+    fullchain_dest: "{{ acme_fullchain_dest }}"
+    chain_dest: "{{ acme_chain_dest }}"
+    data: "{{ letsencrypt_challenge }}"

@@ -1,0 +1,57 @@
+{
+  "variables": {
+      "home": "{{env `HOME`}}",
+      "remote_user": "pi",
+      "remote_home": "/home/pi",
+      "artifacts": "{{env `HOME`}}/sources/go-cropdroid/extra/dist/arm64",
+      "cropdroid_binary_type": "standalone"
+  },
+  "builders": [
+    {
+      "name": "2020-05-27-raspios-buster-arm64-prod",
+      "type": "arm-image",
+      "qemu_binary": "qemu-system-arm",
+      "image_type": "raspberrypi",
+      "iso_url": "https://downloads.raspberrypi.org/raspios_arm64/images/raspios_arm64-2020-05-28/2020-05-27-raspios-buster-arm64.zip",
+      "iso_checksum_type": "sha256",
+      "iso_checksum": "d06d8eecfa3980e18f9061777ca2dac50d98037373e1bd04e8726d79467dc7c7",
+      "target_image_size": 4000000000
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "apt-get update",
+        "apt-get upgrade -y",
+        "apt-get install -y vim ssh git wget curl",
+        "apt-get install -y raspberrypi-ui-mods rpi-chromium-mods"
+      ]
+    }, {
+      "type": "shell",
+      "inline": ["touch /boot/ssh"]
+    }, {
+      "type": "shell",
+      "inline": "mkdir {{user `remote_home`}}/.ssh"
+    }, {
+      "type": "file",
+      "source": "{{user `home`}}/.ssh/id_rsa.pub",
+      "destination": "{{user `remote_home`}}/.ssh/authorized_keys"
+    }, {
+      "type": "file",
+      "source": "{{user `artifacts`}}/cropdroid-{{user `cropdroid_binary_type`}}",
+      "destination": "/usr/local/bin/cropdroid"
+    }, {
+      "type": "file",
+      "source": "{{user `artifacts`}}/cockroach",
+      "destination": "/usr/local/bin/cockroach"
+    }, {
+      "type": "shell",
+      "inline": [
+        "chown {{user `remote_user`}} {{user `remote_home`}}/.ssh /usr/local/bin/cropdroid /usr/local/bin/cockroach",
+        "chmod -R 600 {{user `remote_home`}}/.ssh /usr/local/bin/cropdroid /usr/local/bin/cockroach",
+        "touch /var/log/cropdroid.log && chown {{user `remote_user`}}.root /var/log/cropdroid.log"
+      ]
+    }
+  ]
+}

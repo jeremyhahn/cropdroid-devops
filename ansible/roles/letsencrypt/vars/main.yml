@@ -1,0 +1,20 @@
+---
+
+aws_access_key_id:
+aws_secret_access_key:
+aws_region:
+aws_profile:
+acme_domain: example.com
+acme_common_name: www.example.com
+acme_directory: "https://acme-v02.api.letsencrypt.org/directory"
+#acme_directory: "https://acme-staging-v02.api.letsencrypt.org/directory"
+acme_challenge_type: "dns-01"
+acme_version: 2
+acme_account_email: user@example.com
+acme_cert_root: "/etc/ssl/certs"
+acme_account_key_src: "{{ acme_cert_root }}/letsencrypt-account.key"
+acme_csr: "{{ acme_cert_root }}/{{ acme_common_name }}.csr"
+acme_key: "{{ acme_cert_root }}/{{ acme_common_name }}.key"
+acme_dest: "{{ acme_cert_root }}/{{ acme_common_name }}.crt"
+acme_fullchain_dest: "{{ acme_cert_root }}/{{ acme_common_name }}-fullchain.crt"
+acme_chain_dest: "{{ acme_cert_root }}/{{ acme_common_name }}-intermediate.crt"

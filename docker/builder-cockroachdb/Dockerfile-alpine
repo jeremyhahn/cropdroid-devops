@@ -1,0 +1,29 @@
+FROM alpine:latest
+
+LABEL maintainer="jeremyhahn <mail@jeremyhahn.com>"
+
+ARG CORES=20
+ARG COCKROACH_VERSION=v20.2.4
+
+ENV CORES=${CORES} COCKROACH_VERSION=${COCKROACH_VERSION}
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apk update
+RUN apk add --update --no-cache \
+    build-base \
+    linux-headers \
+    cmake \
+    bash \
+    perl \
+    git \
+    go \
+    wget \
+    autoconf \
+    bison \
+    ccache
+
+#RUN add install -y build-essential golang autoconf bison cmake ccache libtinfo-dev libncurses-dev git wget
+
+RUN wget -qO- https://binaries.cockroachdb.com/cockroach-$COCKROACH_VERSION.src.tgz | tar  xvz
+RUN cd cockroach-$COCKROACH_VERSION && IGNORE_GOVERS=1 make -j$CORES build
+RUN cd cockroach-$COCKROACH_VERSION && make install

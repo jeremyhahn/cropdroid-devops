@@ -1,0 +1,70 @@
+ARG BASE_IMAGE=ubuntu:20.10
+ARG ROCKSDB_VERSION=6.10.fb
+ARG CORES=2
+
+FROM $BASE_IMAGE
+
+LABEL maintainer="jeremyhahn <mail@jeremyhahn.com>"
+
+ARG CORES
+ARG ROCKSDB_VERSION
+
+ENV ROCKSDB_VERSION=${ROCKSDB_VERSION}
+
+#ROCKSDB_VERSION=v5.16.6
+#ROCKSDB_VERSION=v5.17.2
+#ROCKSDB_VERSION=rocksdb-5.7.1
+#ROCKSDB_VERSION=rocksdb-5.7.5
+#ROCKSDB_VERSION=5.17.fb
+#ROCKSDB_VERSION=v5.18.4
+#ROCKSDB_VERSION=v6.10.2
+#ROCKSDB_VERSION=6.10.fb
+#ROCKSDB_VERSION=6.21.fb
+#ROCKSDB_VERSION=v6.11.4
+#ROCKSDB_VERSION=v6.11.6
+#ROCKSDB_VERSION=v6.12.6
+#ROCKSDB_VERSION=v6.12.7
+#ROCKSDB_VERSION=v6.13.2
+#ROCKSDB_VERSION=v6.13.3
+#ROCKSDB_VERSION=v6.14.5
+#ROCKSDB_VERSION=v6.14.6
+#ROCKSDB_VERSION=v6.15.2
+#ROCKSDB_VERSION=v6.15.4
+#ROCKSDB_VERSION=v6.15.5
+#ROCKSDB_VERSION=v6.16.3
+#ROCKSDB_VERSION=v6.16.4
+#ROCKSDB_VERSION=v6.17.3
+#ROCKSDB_VERSION=v6.19.3
+#ROCKSDB_VERSION=v6.20.3
+
+ENV CORES=${CORES} ROCKSDB_VERSION=${ROCKSDB_VERSION}
+
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y \
+    build-essential \
+    git \
+    libgflags-dev \
+    libsnappy-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libzstd-dev \
+    liblz4-dev
+
+#RUN git clone --depth=1 https://github.com/facebook/rocksdb.git && \
+RUN git clone https://github.com/facebook/rocksdb.git && \
+    cd rocksdb && \
+    git fetch --all --tags && \
+    git checkout $ROCKSDB_VERSION
+    #git checkout tags/$ROCKSDB_VERSION
+
+#RUN cd rocksdb && make -j$CORES ldb
+RUN cd rocksdb && USE_SSE=1 make -j$CORES static_lib
+#RUN cd rocksdb && make -j$CORES shared_lib
+RUN cd rocksdb && make -j$CORES install-static
+#RUN cd rocksdb && make -j$CORES install-shared
+
+#RUN ln -s /usr/local/lib/librocksdb_debug.a /usr/local/lib/librocksdb.a
+#    ln -s /usr/local/lib/librocksdb_debug.so /usr/local/lib/librocksdb.so && \
+#    ln -s /usr/local/lib/librocksdb_debug.so.6 /usr/local/lib/librocksdb.so.6 && \
+#    ln -s /usr/local/lib/librocksdb_debug.so.6.10 /usr/local/lib/librocksdb.so.6.10 && \  
+#    cp ldb /usr/local/bin/

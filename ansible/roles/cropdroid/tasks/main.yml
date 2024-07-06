@@ -1,0 +1,81 @@
+---
+
+- include: os.yml
+
+- name: Create CropDroid home directory
+  file:
+    path: "{{ cropdroid_home }}"
+    mode: 0755
+    state: directory
+
+- name: Create CropDroid database directory
+  file:
+    path: "{{ cropdroid_home }}/db"
+    mode: 0774
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ cropdroid_user }}"
+
+- name: Create CropDroid log file
+  file:
+    path: "{{ cropdroid_log }}"
+    state: touch
+
+- name: Copy CropDroid JWT and cryptography keys
+  copy:
+    src: keys/
+    dest: "{{ cropdroid_home }}/keys"
+    owner: "{{ owner }}"
+    group: "{{ cropdroid_user }}"
+    mode: 0640
+
+- name: Copy CropDroid public_html directory
+  copy:
+    src: public_html/
+    dest: "{{ cropdroid_home }}/public_html"
+    owner: "{{ owner }}"
+    group: "{{ cropdroid_user }}"
+    mode: 0640
+
+- name: Copy CropDroid binary
+  copy:
+    src: "{{ cropdroid_binary }}"
+    dest: /usr/local/bin/cropdroid
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+    mode: 0777
+  notify:
+    - Start cropdroid
+
+- name: Create CropDroid systemd service
+  template:
+    src: cropdroid.service
+    dest: /lib/systemd/system/cropdroid.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - Start cropdroid
+
+- name: Check if CropDroid sqlite database exists
+  stat:
+    path: "{{ cropdroid_home }}/db/cropdroid.db"
+  register: db_file
+
+- name: Create CropDroid sqlite database, if it doesnt exist
+  command: "cropdroid config --home {{ cropdroid_home }} --init --debug --datastore sqlite"
+  when: not db_file.stat.exists
+
+- name: Set sqlite database file permissions
+  file:
+    path: "{{ cropdroid_home }}/db/cropdroid.db"
+    owner: "{{ owner }}"
+    group: "{{ cropdroid_user }}"
+    mode: 0774
+  when: db_file.stat.exists
+
+- name: Start CropDroid service, if not started
+  service:
+    name: cropdroid
+    state: started
+    enabled: yes

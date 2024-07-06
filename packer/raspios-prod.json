@@ -1,0 +1,55 @@
+{
+  "variables": {
+    "local_user": "{{env `USER`}}",
+    "target_user": "pi",
+    "appname": "cropdroid",
+    "apptype": "standalone",
+    "appenv": "dev",
+    "hostname": "defaultcrop",
+    "cropdroid_home": "/opt/cropdroid",
+    "eth0_cidr": "192.168.10.10/24",
+    "wlan_cidr": "192.168.100.10/24",
+    "wlan_ssid": "default",
+    "wlan_psk": "secret",
+    "wlan_key_mgmt": "WPA-PSK",
+    "wlan_country": "US",
+    "datastore": "memory"
+  },
+  "builders": [
+    {
+      "name": "raspios-standalone-prod",
+      "type": "arm-image",
+      "iso_url": "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2020-02-14/2020-02-13-raspbian-buster-lite.zip",
+      "iso_checksum_type": "sha256",
+      "iso_checksum": "12ae6e17bf95b6ba83beca61e7394e7411b45eba7e6a520f434b0748ea7370e8",
+      "target_image_size": 4294967296
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "apt-get update",
+        "apt-get upgrade -y",
+        "apt-get install -y ansible ssh vim ntp",
+        "mkdir /home/{{user `target_user`}}/.ssh"
+      ]
+    }, {
+      "type": "file",
+      "source": "/home/{{user `local_user`}}/.ssh/id_rsa.pub",
+      "destination": "/home/{{user `target_user`}}/.ssh/authorized_keys"
+    }, {
+      "type": "shell",
+      "inline": [
+        "chown -R {{user `target_user`}}.{{user `target_user`}} /home/{{user `target_user`}}/.ssh",
+        "chmod -R 600 /home/{{user `target_user`}}/.ssh/*",
+        "touch /boot/ssh"
+      ]
+    }, {
+      "type": "ansible-local",
+      "playbook_file": "ansible/playbook.yml",
+      "playbook_dir": "ansible",
+      "extra_arguments": [ "--extra-vars \"aws_access_key_id={{user `aws_access_key_id`}} aws_secret_access_key={{user `aws_secret_access_key`}} aws_region={{user `aws_region`}} aws_profile={{user `aws_profile`}} appname={{user `appname` }} apptype={{user `apptype` }} appenv={{user `appenv` }} -e hostname={{user `hostname` }} cropdroid_home={{user `cropdroid_home` }} eth0_cidr={{user `eth0_cidr` }} eth0_routers={{user `eth0_routers` }} eth0_dns={{user `eth0_dns` }} wlan_cidr={{user `wlan_cidr` }} wlan_routers={{user `wlan_routers` }} wlan_dns={{user `wlan_dns` }} wlan_ssid={{user `wlan_ssid` }} wlan_psk={{user `wlan_psk` }}  wlan_key_mgmt={{user `wlan_key_mgmt` }} wlan_country={{user `wlan_country` }} datastore={{user `datastore` }}\"" ]
+    }
+  ]
+}

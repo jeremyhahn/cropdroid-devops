@@ -1,0 +1,6 @@
+- name: (Create and) open the LUKS container; name it "mycrypt"
+  community.crypto.luks_device:
+    device: "/dev/loop0"
+    state: "opened"
+    name: "mycrypt"
+    keyfile: "/vault/keyfile"

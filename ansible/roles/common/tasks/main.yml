@@ -1,0 +1,20 @@
+---
+- name: Install common packages
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items: "{{ common_packages }}"
+
+- name: Ensure PIP is installed.
+  package:
+    name: "{{ pip_package }}"
+    state: present
+
+- name: Ensure pip_install_packages are installed.
+  pip:
+    name: "{{ pip_install_packages }}"
+    version: "{{ item.version | default(omit) }}"
+    virtualenv: "{{ item.virtualenv | default(omit) }}"
+    state: "{{ item.state | default(omit) }}"
+    executable: "{{ pip_executable }}"
+  with_items: "{{ pip_install_packages }}"

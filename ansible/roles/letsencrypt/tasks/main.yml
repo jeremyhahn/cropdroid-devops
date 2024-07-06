@@ -1,0 +1,35 @@
+---
+
+- debug:
+   var: acme_domain
+
+- debug:
+   var: acme_common_name
+
+- name: Generate ACME account private key
+  openssl_privatekey:
+    path: "{{ acme_account_key_src }}"
+
+- name: Create certificate private key
+  openssl_privatekey:
+    path: "{{ acme_key }}"
+    size: 2048 # ACM / ALB requires 2048 bit key
+  register: cert_private_key
+
+- name: Generate an OpenSSL Certificate Signing Request
+  openssl_csr:
+    path: "{{ acme_csr }}"
+    privatekey_path: "{{ cert_private_key.filename }}"
+    common_name: "{{ acme_common_name }}"
+  when:
+    cert_private_key is changed
+
+- include: http-01.yml
+  when:
+    - acme_challenge_type == "http-01"
+
+- include: dns-01.yml
+  when:
+    - acme_challenge_type == "dns-01"
+
+- include: acm.yml

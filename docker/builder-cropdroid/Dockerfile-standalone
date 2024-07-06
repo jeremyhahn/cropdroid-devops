@@ -1,0 +1,12 @@
+ARG BASE_IMAGE=builder-cropdroid-base-ubuntu
+ARG CORES=2
+
+FROM $BASE_IMAGE
+
+ARG CORES
+ENV CORES=${CORES}
+
+LABEL maintainer="jeremyhahn <mail@jeremyhahn.com>"
+
+RUN go get
+RUN make -j${CORES} build-standalone-static

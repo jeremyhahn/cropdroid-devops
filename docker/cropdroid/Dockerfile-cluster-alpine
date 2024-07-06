@@ -1,0 +1,54 @@
+ARG CLUSTER_BUILDER=builder-cropdroid-cluster-ubuntu
+ARG ROCKSDB_BUILDER=builder-rocksdb-ubuntu
+ARG BASE_IMAGE=alpine:latest
+
+FROM $CLUSTER_BUILDER as cluster_builder
+FROM $ROCKSDB_BUILDER as rocksdb_builder
+
+FROM $BASE_IMAGE
+
+ARG TIMEZONE=America/New_York
+ARG CROPDROID_SRC=src/go-cropdroid/
+ARG CROPDROID_HOME=/opt/cropdroid
+ARG CROPDROID_USER=www-data
+ARG LIB_DIR=/usr/local/lib
+
+ENV MUSL_LOCALE_DEPS cmake make musl-dev gcc gettext-dev libintl 
+ENV MUSL_LOCPATH /usr/share/i18n/locales/musl
+
+RUN apk add --no-cache \
+    tzdata \
+    $MUSL_LOCALE_DEPS \
+    && wget https://gitlab.com/rilian-la-te/musl-locales/-/archive/master/musl-locales-master.zip \
+    && unzip musl-locales-master.zip \
+      && cd musl-locales-master \
+      && cmake -DLOCALE_PROFILE=OFF -D CMAKE_INSTALL_PREFIX:PATH=/usr . && make && make install \
+      && cd .. && rm -r musl-locales-master && \
+    rm -rf /var/cache/apk/*
+
+RUN ls /usr/share/zoneinfo
+
+RUN cp /usr/share/zoneinfo/$TIMEZONE /etc/localtime
+
+RUN addgroup -S www-data && \
+    adduser -S -g www-data www-data
+
+WORKDIR $CROPDROID_HOME
+COPY $CROPDROID_SRC/public_html/ $CROPDROID_HOME/public_html
+COPY $CROPDROID_SRC/keys $CROPDROID_HOME/keys
+COPY --from=cluster_builder /cropdroid/cropdroid $CROPDROID_HOME/cropdroid
+
+RUN chmod 777 -R $CROPDROID_HOME/public_html && \
+    mkdir -p $CROPDROID_HOME/db && \
+    chmod 777 -R $CROPDROID_HOME/db && \
+    touch /var/log/cropdroid.log && \
+    chmod 777 /var/log/cropdroid.log && \
+    ln -s /opt/cropdroid/cropdroid /usr/local/bin/cropdroid
+
+CMD ["cropdroid", "cluster", \
+    "--debug", \
+    "--ssl=false", \
+    "--datastore", "cockroach", \
+    "--datastore-host", "roach1", \
+    "--enable-registrations", \
+    "--raft", "\"cropdroid-01:60020,cropdroid-02:60021,cropdroid-03:60022\""]

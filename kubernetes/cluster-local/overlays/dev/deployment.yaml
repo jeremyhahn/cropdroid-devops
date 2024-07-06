@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cropdroid
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      containers:
+      - name: cropdroid
+        #image: localhost:5000/cropdroid-cluster-ubuntu:latest

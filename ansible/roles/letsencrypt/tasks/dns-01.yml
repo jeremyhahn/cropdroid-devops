@@ -1,0 +1,44 @@
+---
+
+- name: Create DNS-01 challenge using account key file.
+  acme_certificate:
+    account_key_src: "{{ acme_account_key_src }}"
+    account_email: "{{ acme_account_email }}"
+    src: "{{ acme_csr }}"
+    cert: "{{ acme_dest }}"
+    challenge: "{{ acme_challenge_type }}"
+    acme_directory: "{{ acme_directory }}"
+    acme_version: "{{ acme_version }}"
+    # Renew if the certificate is at least 30 days old
+    remaining_days: 60
+    terms_agreed: true
+  register: acme_challenge
+
+- route53:
+    aws_access_key: "{{ aws_access_key_id }}"
+    aws_secret_key: "{{ aws_secret_access_key }}"
+    zone: "{{ acme_domain }}"
+    record: "{{ acme_challenge.challenge_data[acme_common_name]['dns-01'].record }}"
+    type: TXT
+    ttl: 60
+    state: present
+    wait: yes
+    # Note: route53 requires TXT entries to be enclosed in quotes
+    value: "{{ acme_challenge.challenge_data[acme_common_name]['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
+    overwrite: true
+  when: acme_challenge is changed
+
+- name: Let the challenge be validated and retrieve the cert and intermediate certificate
+  acme_certificate:
+    account_key_src: "{{ acme_account_key_src }}"
+    account_email: "{{ acme_account_email }}"
+    src: "{{ acme_csr }}"
+    cert: "{{ acme_dest }}"
+    fullchain: "{{ acme_fullchain_dest }}"
+    chain: "{{ acme_chain_dest }}"
+    challenge: "{{ acme_challenge_type }}"
+    acme_directory: "{{ acme_directory }}"
+    acme_version: "{{ acme_version }}"
+    remaining_days: 60
+    data: "{{ acme_challenge }}"
+  when: acme_challenge is changed

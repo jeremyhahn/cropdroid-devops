@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cropdroid
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cropdroid-lb
+  labels:
+    app: cropdroid
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    name: web
+    targetPort: 80
+    nodePort: 30080
+  selector:
+    app: cropdroid
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cropdroid
+  labels:
+    app: cropdroid
+spec:
+  ports:
+  - port: 8080
+    name: web
+  clusterIP: None
+  selector:
+    app: cropdroid
+  publishNotReadyAddresses: true
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cropdroid
+spec:
+  serviceName: "cropdroid"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cropdroid
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: cropdroid
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: cropdroid
+          image: cropdroid-cluster-ubuntu:latest
+          command: ["cropdroid", "cluster"]
+          args:
+            - "--debug"
+            - "--ssl=false"
+            - "--port=80"
+#            - "--datastore=cockroach"
+#            - "--datastore-host=roach1"
+            - "--enable-registrations"
+            - "--gossip-peers=cropdroid-0-0.cropdroid-0:60010,cropdroid-0-1.cropdroid-0:60010,cropdroid-0-2.cropdroid-0:60010"
+            - "--raft=cropdroid-0-0.cropdroid-0:60020,cropdroid-0-1.cropdroid-0:60020,cropdroid-0-2.cropdroid-0:60020"
+          env:
+            - name: DEBUG
+              value: "true"
+            - name: SSL
+              value: "false"
+            - name: PORT
+              value: "80"
+            - name: DATASTORE
+              value: "cockroach"
+            - name: DATASTORE_HOST
+              value: "roach1"
+            - name: ENABLE_REGISTRATIONS
+              value: "true"
+            - name: RAFT            
+              value: "cropdroid-0:60020,cropdroid-1:60020,cropdroid-2:60020"
+            - name: LISTEN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: GOMAXPROCS
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.cpu
+                  divisor: "1"
+            - name: MEMORY_LIMIT_MIB
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
+                  divisor: "1Mi"
+          ports:
+            - containerPort: 80
+              name: web
+            - containerPort: 60010
+              name: gossip
+            - containerPort: 60020
+              name: raft
+          volumeMounts:
+            - name: cropdroid
+              mountPath: /cropdroid-data
+          # livenessProbe:
+          #   httpGet:
+          #     path: "/system"
+          #     port: http
+          #     scheme: HTTP
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: "/system"
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 2
+  volumeClaimTemplates:
+  - metadata:
+      name: cropdroid
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi

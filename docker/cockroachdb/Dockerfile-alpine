@@ -1,0 +1,12 @@
+ARG COCKROACHDB_BUILDER=builder-cockroachdb-ubuntu
+ARG BASE_IMAGE=alpine:latest
+
+FROM $COCKROACHDB_BUILDER as cockroachdb_builder
+
+FROM $BASE_IMAGE
+
+WORKDIR /
+
+COPY --from=cockroachdb_builder /usr/local/bin/cockroach /usr/local/bin/cockroach
+
+CMD ["cockroach"]

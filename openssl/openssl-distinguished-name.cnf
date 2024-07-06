@@ -1,0 +1,13 @@
+[ req ]
+prompt                 = no
+days                   = 365
+distinguished_name     = req_distinguished_name
+
+[ req_distinguished_name ]
+countryName            = US
+stateOrProvinceName    = FL
+localityName           = Miami
+organizationName       = CropDroid
+organizationalUnitName = Web Services
+commonName             = localhost
+emailAddress           = root@localhost

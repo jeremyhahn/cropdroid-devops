@@ -1,0 +1,70 @@
+{
+  "variables": {
+    "aws_access_key_id": "",
+    "aws_secret_access_key": "",
+    "aws_region": "",
+    "aws_profile": "",
+    "appname": "",
+    "appenv": "",
+    "hosted_zone": "",
+    "admin_email": ""
+  },
+
+  "builders": [
+    {
+      "name": "centos7-x86_64",
+      "type": "qemu",
+      "format": "raw",
+      "accelerator": "kvm",
+      "qemu_binary": "/usr/bin/kvm",
+      "net_device": "virtio-net",
+      "disk_interface": "virtio",
+      "disk_cache": "none",
+      "qemuargs": [[ "-m", "4096M" ],[ "-smp", "4" ]],
+
+      "iso_url": "http://centos.mirror.garr.it/centos/7.7.1908/isos/x86_64/CentOS-7-x86_64-Minimal-1908.iso",
+      "iso_checksum": "9a2c47d97b9975452f7d582264e9fc16d108ed8252ac6816239a3b58cef5c53d",
+      "iso_checksum_type": "sha256",
+
+      "vm_name": "centos7-base.img",
+      "output_directory": "artifacts",
+
+      "http_directory": "htdocs",
+      "http_port_min": 10082,
+      "http_port_max": 10089,
+
+      "ssh_host_port_min": 2222,
+      "ssh_host_port_max": 2229,
+
+      "ssh_username": "root",
+      "ssh_password": "CHANGEME",
+      "ssh_port": 22,
+      "ssh_wait_timeout": "1200s",
+
+      "boot_wait": "5s",
+      "boot_command": [
+        "<up><wait><tab><wait> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/centos7-ks.cfg<enter><wait>"
+      ],
+
+      "shutdown_command": "shutdown -P now"
+    }
+  ],
+
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "{{ .Vars }} sudo -E bash '{{ .Path }}'",
+      "inline": [
+        "yum -y update",
+        "yum -y install epel-release ansible",
+        "yum -y upgrade"
+      ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "ansible/playbook.yml",
+      "playbook_dir": "ansible",
+      "extra_arguments": [ "--extra-vars \"aws_access_key_id={{user `aws_access_key_id`}} aws_secret_access_key={{user `aws_secret_access_key`}} aws_region={{user `aws_region`}} aws_profile={{user `aws_profile`}} appname={{user `appname`}} appenv={{user `appenv`}} hosted_zone={{user `hosted_zone`}} admin_email={{user `admin_email`}}\"" ]
+    }
+  ]
+}

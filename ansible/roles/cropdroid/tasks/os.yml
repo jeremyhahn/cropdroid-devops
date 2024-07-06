@@ -1,0 +1,41 @@
+---
+
+- name: Create /etc/hostname
+  template:
+    src: hostname
+    dest: /etc/hostname
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create /etc/hosts
+  template:
+    src: hosts
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create /boot/wpa_supplicant.conf
+#- name: Create /etc/wpa_supplicant/wpa_supplicant.conf
+  template:
+    src: wpa_supplicant.tpl
+    dest: /boot/wpa_supplicant.conf
+    #dest: /etc/wpa_supplicant/wpa_supplicant.conf
+    owner: root
+    group: root
+    mode: 0600
+  when: wlan_ssid|length > 0
+
+- name: Create /etc/dhcpcd.conf
+  template:
+    src: dhcpcd.tpl
+    dest: /etc/dhcpcd.conf
+    owner: root
+    group: root
+    mode: 0644
+  when: (eth0_cidr|length > 0) or (wlan_cidr|length > 0)
+
+- name: Enable wireless device (rfkill)
+  command: /usr/sbin/rfkill unblock wifi
+  when: wlan_ssid|length > 0

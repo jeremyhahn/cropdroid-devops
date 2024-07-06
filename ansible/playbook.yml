@@ -1,0 +1,38 @@
+---
+
+- name: Configure CropDroid base image
+  hosts: localhost
+  become: true
+  vars:
+    aws_access_key_id:
+    aws_secret_access_key:
+    aws_region: us-east-1
+    aws_profile: default
+    appname: example
+    appenv: dev
+    apptype: standalone
+    cropdroid_binary: cropdroid-standalone-arm
+    cropdroid_home: /opt/cropdroid
+    cropdroid_log: /var/log/cropdroid.log
+    hostname: cropdroid1
+    wlan_ssid: example-ssid
+    wlan_psk: secret
+    wlan_key_mgmt: WPA-PSK
+    wlan_country: US
+    firewall_state: started
+    firewall_enabled_at_boot: true
+    firewall_allowed_tcp_ports:
+      - "22"
+      - "80"
+      - "443"
+
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+    AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+  roles:
+#    - common
+#    - ansible-role-firewall
+    - role: cropdroid
+      cropdroid_binary: "{{ cropdroid_binary }}"

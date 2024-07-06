@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cropdroid
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cropdroid
+  labels:
+    app: cropdroid
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    name: web
+    targetPort: 80
+    nodePort: 30090
+  selector:
+    app: cropdroid
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cropdroid
+  labels:
+    app: cropdroid
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cropdroid
+  template:
+    metadata:
+      labels:
+        app: cropdroid
+    spec:
+      containers:
+      - name: cropdroid
+        image: cropdroid-standalone-ubuntu:latest
+        command: ["cropdroid", "standalone"]
+        args:
+          - "--debug"
+          - "--ssl=false"
+          - "--port=80"
+          - "--enable-registrations"
+        ports:
+          - containerPort: 80
+        env:
+          - name: GOMAXPROCS
+            valueFrom:
+              resourceFieldRef:
+                resource: limits.cpu
+                divisor: "1"
+          - name: MEMORY_LIMIT_MIB
+            valueFrom:
+              resourceFieldRef:
+                resource: limits.memory
+                divisor: "1Mi"
+        # livenessProbe:
+        #   httpGet:
+        #     path: "/system"
+        #     port: http
+        #     scheme: HTTP
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: "/system"
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 2
+  

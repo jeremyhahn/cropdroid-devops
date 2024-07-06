@@ -1,0 +1,29 @@
+{
+  "variables": {
+    "home": "{{env `HOME`}}",
+    "artifacts": "{{env `HOME`}}/sources/go-cropdroid/extra/dist/arm64",
+    "cropdroid_binary_type": "standalone"
+  },
+  "builders": [{
+    "name": "2021-05-07-raspios-buster-arm64-dev",
+    "type": "arm-image",
+    "image_type": "raspberrypi",
+    "qemu_binary": "qemu-aarch64-static",
+    "iso_url": "https://downloads.raspberrypi.org/raspios_arm64/images/raspios_arm64-2021-05-28/2021-05-07-raspios-buster-arm64.zip",
+    "iso_checksum_type": "sha256",
+    "iso_checksum": "f882c4c7202074277938b04fa770411c4b8a12f49e9ad2c2d70966e168b7bcb4",
+    "target_image_size": 16000000000
+  }],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "apt-get install -y vim ssh git build-essential python3-pip",
+        "pip install awscli"
+      ]
+    }, {
+      "type": "shell",
+      "script": "scripts/build-dev-raspios64.sh"
+    }
+  ]
+}

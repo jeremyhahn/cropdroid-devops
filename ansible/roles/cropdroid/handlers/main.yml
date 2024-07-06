@@ -1,0 +1,4 @@
+---
+
+- name: Start cropdroid
+  service: name=cropdroid state=started

@@ -1,0 +1,59 @@
+ARG CLUSTER_BUILDER=builder-cropdroid-cluster-ubuntu
+ARG ROCKSDB_BUILDER=builder-rocksdb-ubuntu
+ARG BASE_IMAGE=ubuntu:latest
+
+FROM $CLUSTER_BUILDER as cluster_builder
+FROM $ROCKSDB_BUILDER as rocksdb_builder
+
+FROM $BASE_IMAGE
+
+ARG TIMEZONE=Eastern
+ARG CROPDROID_SRC=src/go-cropdroid/
+ARG CROPDROID_HOME=/opt/cropdroid
+ARG CROPDROID_USER=www-data
+
+ENV LANG en_US.UTF-8 
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+RUN apt-get update && \
+    apt-get upgrade -y
+
+RUN DEBIAN_FRONTEND=noninteractive && \
+    apt-get install -y --no-install-recommends \
+    locales \
+    tzdata \
+    libsnappy-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libzstd-dev \
+    liblz4-dev \
+    libgflags-dev \
+    iputils-ping \
+    net-tools && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN ln -fs /usr/share/zoneinfo/US/${TIMEZONE} /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata
+
+WORKDIR $CROPDROID_HOME
+COPY $CROPDROID_SRC/public_html/ $CROPDROID_HOME/public_html
+COPY $CROPDROID_SRC/keys $CROPDROID_HOME/keys
+
+COPY --from=cluster_builder /cropdroid/cropdroid $CROPDROID_HOME/cropdroid
+COPY --from=rocksdb_builder /usr/local/lib/librocksdb.a /usr/local/lib/
+
+RUN chmod 777 -R $CROPDROID_HOME/public_html && \
+    mkdir -p $CROPDROID_HOME/db && \
+    chmod 777 -R $CROPDROID_HOME/db && \
+    touch /var/log/cropdroid.log && \
+    chmod 777 /var/log/cropdroid.log && \
+    ln -s $CROPDROID_HOME/cropdroid /usr/local/bin/cropdroid
+
+CMD ["cropdroid", "cluster", \
+    "--debug", \
+    "--ssl=false", \
+    "--datastore", "cockroach", \
+    "--datastore-host", "roach1", \
+    "--enable-registrations", \
+    "--raft", "\"cropdroid-01:60020,cropdroid-02:60021,cropdroid-03:60022\""]

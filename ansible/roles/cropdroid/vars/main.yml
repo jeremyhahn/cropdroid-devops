@@ -1,0 +1,19 @@
+---
+
+cropdroid_home: /opt/cropdroid
+cropdroid_binary: cropdroid-arm
+cropdroid_log: /var/log/cropdroid.log
+cropdroid_user: www-data
+eth0_cidr: 192.168.1.150/24
+eth0_routers: 192.168.1.1
+eth0_dns: 192.168.1.1
+wlan_cidr: 192.168.2.150/24
+wlan_routers: 192.168.2.1
+wlan_dns: 192.168.2.1
+wlan_ssid: example-ssid
+wlan_psk: secret
+wlan_key_mgmt: WPA-PSK
+wlan_country: US
+hostname: cropdroid1
+owner: pi
+group: pi

@@ -1,0 +1,11 @@
+[Unit]
+Description=CropDroid :: Automated Farming
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+ExecStart=/usr/local/bin/cropdroid {{ apptype }} --debug --home {{ cropdroid_home }} --keys {{ cropdroid_home }}/keys --data-dir {{ cropdroid_home }}/db --port 80 --ssl=false --datastore {{ datastore }}
+
+[Install]
+WantedBy=multi-user.target

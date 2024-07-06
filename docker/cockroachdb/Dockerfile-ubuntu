@@ -1,0 +1,30 @@
+ARG COCKROACHDB_BUILDER=builder-cockroachdb-ubuntu
+ARG BASE_IMAGE=ubuntu:latest
+
+FROM $COCKROACHDB_BUILDER as cockroachdb_builder
+
+FROM $BASE_IMAGE
+
+ARG TIMEZONE=Eastern
+
+ENV LANG en_US.UTF-8 
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+RUN apt-get update && \
+    apt-get upgrade -y
+
+RUN DEBIAN_FRONTEND=noninteractive && \
+    apt-get install -y --no-install-recommends \
+    locales \
+    tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN ln -fs /usr/share/zoneinfo/US/${TIMEZONE} /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata
+
+WORKDIR /
+
+COPY --from=cockroachdb_builder /usr/local/bin/cockroach /usr/local/bin/cockroach
+
+CMD ["cockroach"]
